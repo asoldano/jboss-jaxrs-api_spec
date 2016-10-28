@@ -67,7 +67,7 @@ public abstract class ClientBuilder implements Configurable<ClientBuilder> {
      * Default client builder implementation class name.
      */
     private static final String JAXRS_DEFAULT_CLIENT_BUILDER =
-            "org.glassfish.jersey.client.JerseyClientBuilder";
+            "org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder";
 
     /**
      * Allows custom implementations to extend the {@code ClientBuilder} class.
