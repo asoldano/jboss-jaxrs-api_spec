@@ -40,7 +40,9 @@
 package javax.ws.rs.client;
 
 import java.net.URL;
+import java.security.AccessController;
 import java.security.KeyStore;
+import java.security.PrivilegedExceptionAction;
 
 import javax.ws.rs.core.Configurable;
 import javax.ws.rs.core.Configuration;
@@ -87,12 +89,32 @@ public abstract class ClientBuilder implements Configurable<ClientBuilder> {
                     FactoryFinder.find(JAXRS_DEFAULT_CLIENT_BUILDER_PROPERTY,
                             JAXRS_DEFAULT_CLIENT_BUILDER);
             if (!(delegate instanceof ClientBuilder)) {
-                Class pClass = ClientBuilder.class;
+                final Class pClass = ClientBuilder.class;
                 String classnameAsResource = pClass.getName().replace('.', '/') + ".class";
-                ClassLoader loader = pClass.getClassLoader();
-                if (loader == null) {
-                    loader = ClassLoader.getSystemClassLoader();
+
+                final SecurityManager sm = System.getSecurityManager();
+                ClassLoader loader = null;
+
+                if (sm == null) {
+
+                    loader = pClass.getClassLoader();
+                    if (loader == null) {
+                        loader = ClassLoader.getSystemClassLoader();
+                    }
+
+                } else {
+                    loader = AccessController.doPrivileged(new PrivilegedExceptionAction<ClassLoader>() {
+                        @Override
+                        public ClassLoader run() throws Exception {
+                            ClassLoader cloader = pClass.getClassLoader();
+                            if (cloader == null) {
+                                cloader = ClassLoader.getSystemClassLoader();
+                            }
+                            return cloader;
+                        }
+                    });
                 }
+
                 URL targetTypeURL = loader.getResource(classnameAsResource);
                 throw new LinkageError("ClassCastException: attempting to cast"
                         + delegate.getClass().getClassLoader().getResource(classnameAsResource)
